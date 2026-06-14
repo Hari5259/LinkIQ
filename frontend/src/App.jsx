@@ -4,6 +4,9 @@ import { AuthProvider } from './context/AuthContext';
 import PrivateRoute from './components/auth/PrivateRoute';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import DashboardPage from './pages/DashboardPage';
+import LinksPage from './pages/LinksPage';
+import AnalyticsPage from './pages/AnalyticsPage';
 
 function App() {
   return (
@@ -17,26 +20,17 @@ function App() {
           {/* Protected Routes */}
           <Route path="/dashboard" element={
             <PrivateRoute>
-              <div className="min-h-screen bg-surface-950 text-white flex items-center justify-center">
-                <div className="text-center">
-                  <h1 className="text-4xl font-bold gradient-text mb-4">Dashboard</h1>
-                  <p className="text-gray-400">Coming in Commit 20</p>
-                </div>
-              </div>
+              <DashboardPage />
             </PrivateRoute>
           } />
           <Route path="/links" element={
             <PrivateRoute>
-              <div className="min-h-screen bg-surface-950 text-white flex items-center justify-center">
-                <p className="text-gray-400">Links page — coming soon</p>
-              </div>
+              <LinksPage />
             </PrivateRoute>
           } />
           <Route path="/analytics/:urlId" element={
             <PrivateRoute>
-              <div className="min-h-screen bg-surface-950 text-white flex items-center justify-center">
-                <p className="text-gray-400">Analytics page — coming soon</p>
-              </div>
+              <AnalyticsPage />
             </PrivateRoute>
           } />
 
@@ -50,9 +44,9 @@ function App() {
       <Toaster
         position="top-right"
         toastOptions={{
-          duration: 4000,
+          duration: 4500,
           style: {
-            background: '#1c1c2e',
+            background: '#12121f',
             color: '#e5e7eb',
             border: '1px solid rgba(99, 102, 241, 0.15)',
             borderRadius: '12px',
