@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const connectDB = require('./config/db');
 
 // Load environment variables
 dotenv.config();
@@ -67,8 +68,12 @@ app.use((err, req, res, next) => {
 });
 
 // ── Start Server ───────────────────────────────
-app.listen(PORT, () => {
-  console.log(`
+const startServer = async () => {
+  // Connect to MongoDB before starting the server
+  await connectDB();
+
+  app.listen(PORT, () => {
+    console.log(`
 ╔═══════════════════════════════════════════╗
 ║                                           ║
 ║   🔗 LinkIQ API Server                    ║
@@ -76,7 +81,10 @@ app.listen(PORT, () => {
 ║   Environment: ${process.env.NODE_ENV || 'development'}            ║
 ║                                           ║
 ╚═══════════════════════════════════════════╝
-  `);
-});
+    `);
+  });
+};
+
+startServer();
 
 module.exports = app;
