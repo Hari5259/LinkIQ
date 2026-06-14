@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
+import PrivateRoute from './components/auth/PrivateRoute';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 
@@ -9,26 +10,43 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
+          {/* Public Routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
 
-          {/* Placeholder — will be replaced with protected dashboard routes */}
+          {/* Protected Routes */}
           <Route path="/dashboard" element={
-            <div className="min-h-screen bg-surface-950 text-white flex items-center justify-center">
-              <div className="text-center">
-                <h1 className="text-4xl font-bold gradient-text mb-4">Dashboard</h1>
-                <p className="text-gray-400">Coming in Commit 20</p>
+            <PrivateRoute>
+              <div className="min-h-screen bg-surface-950 text-white flex items-center justify-center">
+                <div className="text-center">
+                  <h1 className="text-4xl font-bold gradient-text mb-4">Dashboard</h1>
+                  <p className="text-gray-400">Coming in Commit 20</p>
+                </div>
               </div>
-            </div>
+            </PrivateRoute>
+          } />
+          <Route path="/links" element={
+            <PrivateRoute>
+              <div className="min-h-screen bg-surface-950 text-white flex items-center justify-center">
+                <p className="text-gray-400">Links page — coming soon</p>
+              </div>
+            </PrivateRoute>
+          } />
+          <Route path="/analytics/:urlId" element={
+            <PrivateRoute>
+              <div className="min-h-screen bg-surface-950 text-white flex items-center justify-center">
+                <p className="text-gray-400">Analytics page — coming soon</p>
+              </div>
+            </PrivateRoute>
           } />
 
           {/* Default redirect */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </Router>
 
-      {/* Toast notifications — positioned top-right, dark themed */}
+      {/* Toast notifications */}
       <Toaster
         position="top-right"
         toastOptions={{
