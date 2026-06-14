@@ -20,8 +20,11 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-validator": "^7.3.2",
+    "geoip-lite": "^1.4.10",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.7.0"
+    "mongoose": "^9.7.0",
+    "nanoid": "^3.3.12",
+    "ua-parser-js": "^2.0.10"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

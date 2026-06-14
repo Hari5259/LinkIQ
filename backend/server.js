@@ -40,10 +40,15 @@ app.get('/api/health', (req, res) => {
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
 
-// Future routes (will be added in subsequent commits):
-// app.use('/api/urls', urlRoutes);
-// app.use('/api/analytics', analyticsRoutes);
-// app.get('/:shortCode', redirectController.redirect);
+const urlRoutes = require('./routes/urlRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
+const { redirect } = require('./controllers/redirectController');
+
+app.use('/api/urls', urlRoutes);
+app.use('/api/analytics', analyticsRoutes);
+
+// Redirect endpoint — MUST be last (catches /:shortCode)
+app.get('/:shortCode', redirect);
 
 // ── 404 Handler ────────────────────────────────
 app.use((req, res) => {
