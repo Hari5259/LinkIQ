@@ -118,3 +118,8 @@ linkIQ/
 ## 🏁 Hackathon Submission
 
 This project is a part of a hackathon run by https://katomaran.com
+
+## 📞 Contact & Demo Video
+
+- **Demo Video URL**: [YouTube Video Link](https://youtu.be/0thcotvWKSs)
+- **Contact Email**: shariharasudhan333@gmail.com

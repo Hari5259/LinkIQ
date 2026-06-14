@@ -21,7 +21,7 @@ export default function LandingPage() {
       desc: "Shorten URLs instantly, add dynamic expiration rules, and generate print-ready QR codes for marketing campaigns.",
       badge: "ENTERPRISE READY",
       bgGradient: "from-[#081b33] to-[#040814]",
-      image: "🔗"
+      icon: <Link2 className="w-20 h-20 text-brand-400" />
     },
     {
       title: "REAL-TIME CLICK TRACKING",
@@ -29,7 +29,7 @@ export default function LandingPage() {
       desc: "Analyze browser details, device distributions, IP addresses, and geographic locations for every single click.",
       badge: "ANALYTICS SYSTEM",
       bgGradient: "from-[#1a0f30] to-[#0a0514]",
-      image: "📊"
+      icon: <TrendingUp className="w-20 h-20 text-emerald-400" />
     },
     {
       title: "DYNAMIC QR CAMPAIGNS",
@@ -37,7 +37,40 @@ export default function LandingPage() {
       desc: "Auto-generate high-resolution QR codes that change destination dynamically without reprint requirements.",
       badge: "SMART QR TECHNOLOGY",
       bgGradient: "from-[#0a2720] to-[#030d0a]",
-      image: "📱"
+      icon: <QrCode className="w-20 h-20 text-cyan-400" />
+    }
+  ];
+
+  const campaignModules = [
+    {
+      title: "Marketing Campaigns",
+      icon: <TrendingUp className="w-10 h-10 text-[#f84464]" />,
+      desc: "Short links for Google, Facebook, and newsletter advertising campaigns.",
+      metric: "98% CTR Average"
+    },
+    {
+      title: "Social Bio Portals",
+      icon: <Link2 className="w-10 h-10 text-[#f84464]" />,
+      desc: "Combine and manage multiple profile destinations into a single custom slug.",
+      metric: "Custom Slugs"
+    },
+    {
+      title: "Affiliate & Attribution",
+      icon: <Activity className="w-10 h-10 text-[#f84464]" />,
+      desc: "Track affiliate conversions, referral metrics, and attribution codes.",
+      metric: "Secure Redirects"
+    },
+    {
+      title: "Corporate Redirects",
+      icon: <Shield className="w-10 h-10 text-[#f84464]" />,
+      desc: "Sleek URLs utilizing custom branded domains with SSL support.",
+      metric: "Enterprise SLA"
+    },
+    {
+      title: "Print QR Codes",
+      icon: <QrCode className="w-10 h-10 text-[#f84464]" />,
+      desc: "Dynamic print-ready QR codes for packaging, banners, and posters.",
+      metric: "Vector Export"
     }
   ];
 
@@ -114,7 +147,7 @@ export default function LandingPage() {
           
           {/* Logo */}
           <div className="flex items-center gap-2 cursor-pointer select-none" onClick={() => navigate('/')}>
-            <span className="text-2xl font-black tracking-tight text-white">link</span>
+            <span className="text-2xl font-black tracking-tight text-white animate-fade-in">link</span>
             <div className="bg-[#f84464] text-white font-black px-2.5 py-1 rounded-md text-sm leading-none shadow-md">
               IQ
             </div>
@@ -189,8 +222,8 @@ export default function LandingPage() {
                   </p>
                 </div>
 
-                <div className="hidden md:flex text-8xl select-none filter drop-shadow-lg p-6 animate-float">
-                  {slide.image}
+                <div className="hidden md:flex select-none filter drop-shadow-lg p-6 animate-float">
+                  {slide.icon}
                 </div>
               </div>
             );
@@ -340,78 +373,34 @@ export default function LandingPage() {
           </Link>
         </div>
 
-        {/* Templates Grid - Cards match BMS Movie grid structure but with SaaS relevant copy */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
-          {[
-            {
-              title: "Marketing Campaigns",
-              icon: "🎟️",
-              desc: "Short links for Google, Facebook, and newsletter advertising campaigns.",
-              metric: "98% CTR Average",
-              votes: "Highly Active"
-            },
-            {
-              title: "Social Bio Portals",
-              icon: "🔗",
-              desc: "Combine and manage multiple profile destinations into a single custom slug.",
-              metric: "Custom Slugs",
-              votes: "95% Engagement"
-            },
-            {
-              title: "Affiliate & Attribution",
-              icon: "🏷️",
-              desc: "Track affiliate conversions, referral metrics, and attribution codes.",
-              metric: "Secure Redirects",
-              votes: "Real-time Audits"
-            },
-            {
-              title: "Corporate Redirects",
-              icon: "💼",
-              desc: "Sleek URLs utilizing custom branded domains with SSL support.",
-              metric: "Enterprise SLA",
-              votes: "Fully Encrypted"
-            },
-            {
-              title: "Print QR Codes",
-              icon: "📱",
-              desc: "Dynamic print-ready QR codes for packaging, banners, and posters.",
-              metric: "Vector Export",
-              votes: "300 DPI Output"
-            }
-          ].map((item, idx) => (
+        {/* Templates Grid - Clean campaign cards with icons and descriptions */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+          {campaignModules.map((item, idx) => (
             <div
               key={idx}
               className="flex flex-col bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all hover:-translate-y-1 group cursor-pointer"
               onClick={() => navigate('/login')}
             >
-              {/* Icon / Image Placeholder */}
-              <div className="h-44 bg-gray-50 flex items-center justify-center relative border-b border-gray-100">
-                <span className="text-5xl group-hover:scale-110 transition-transform duration-300 select-none">
+              {/* Icon Container */}
+              <div className="h-40 bg-gray-50 flex items-center justify-center border-b border-gray-100">
+                <div className="group-hover:scale-110 transition-transform duration-300">
                   {item.icon}
-                </span>
-                
-                {/* Rating Bar Overlay */}
-                <div className="absolute bottom-0 inset-x-0 bg-black/75 px-3 py-1.5 flex justify-between items-center text-[10px] text-white font-bold select-none">
-                  <span className="flex items-center gap-1 text-[#f84464]">
-                    ★ 9.8 Score
-                  </span>
-                  <span>{item.votes}</span>
                 </div>
               </div>
 
               {/* Card info */}
-              <div className="p-3.5 space-y-1 flex-1 flex flex-col justify-between">
+              <div className="p-4 space-y-2 flex-1 flex flex-col justify-between">
                 <div>
                   <h3 className="font-bold text-sm text-gray-800 line-clamp-1 group-hover:text-[#f84464] transition-colors">
                     {item.title}
                   </h3>
-                  <p className="text-gray-400 text-[10px] leading-snug line-clamp-2 mt-1">
+                  <p className="text-gray-400 text-xs leading-relaxed mt-1">
                     {item.desc}
                   </p>
                 </div>
                 
-                <div className="pt-3 border-t border-gray-50 flex justify-between items-center text-[10px] text-gray-500 font-semibold select-none">
-                  <span className="uppercase text-[9px] text-[#f84464] bg-[#f84464]/5 px-1.5 py-0.5 rounded">
+                <div className="pt-3 border-t border-gray-100 flex justify-between items-center text-xs text-gray-500 font-semibold select-none">
+                  <span className="uppercase text-[9px] text-[#f84464] bg-[#f84464]/5 px-2 py-0.5 rounded">
                     {item.metric}
                   </span>
                 </div>

@@ -3,11 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
-import AnimatedBackground from '../components/auth/AnimatedBackground';
 
-/**
- * SignupPage — split-screen layout matching login design language.
- */
 export default function SignupPage() {
   const navigate = useNavigate();
   const { register } = useAuth();
@@ -55,193 +51,152 @@ export default function SignupPage() {
   };
 
   const inputClass = (field) =>
-    `w-full pl-11 pr-4 py-3 bg-surface-800 border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all duration-200 ${
+    `w-full pl-11 pr-4 py-2.5 bg-surface-900 border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all duration-200 text-sm ${
       errors[field]
-        ? 'border-red-500 focus:ring-red-500/30'
-        : 'border-surface-600 focus:ring-brand-500/30 focus:border-brand-500'
+        ? 'border-red-500 focus:ring-red-500/10'
+        : 'border-surface-700 focus:ring-brand-500/20 focus:border-brand-500'
     }`;
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left Panel — Brand */}
-      <div className="hidden lg:flex lg:w-1/2 relative items-center justify-center">
-        <AnimatedBackground />
-        <div className="relative z-10 max-w-md px-8">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
-              <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-              </svg>
+    <div className="min-h-screen flex items-center justify-center p-6 bg-surface-950 mesh-gradient selection:bg-brand-500/30 selection:text-white">
+      {/* Centered Glassmorphic Form Card */}
+      <div className="w-full max-w-md glass-card p-8 md:p-10 relative overflow-hidden group">
+        
+        {/* Subtle decorative glow */}
+        <div className="absolute -top-12 -right-12 w-36 h-36 bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        {/* Brand Header */}
+        <div className="text-center mb-6 select-none">
+          <div className="inline-flex items-center gap-2 mb-3 cursor-pointer" onClick={() => navigate('/')}>
+            <span className="text-2xl font-black tracking-tight text-white">link</span>
+            <div className="bg-[#f84464] text-white font-black px-2 py-0.5 rounded text-xs leading-none shadow-md">
+              IQ
             </div>
-            <h1 className="text-3xl font-bold text-white">LinkIQ</h1>
           </div>
-
-          <h2 className="text-4xl font-bold text-white leading-tight mb-4">
-            Start your
-            <br />
-            <span className="gradient-text">Link Intelligence</span>
-            <br />
-            journey today.
-          </h2>
-
-          <p className="text-gray-400 text-lg mb-8">
-            Join thousands of creators and marketers who use LinkIQ to understand their audience better.
-          </p>
-
-          <div className="space-y-4">
-            {[
-              { icon: '⚡', text: 'Setup in under 30 seconds' },
-              { icon: '🔒', text: 'Enterprise-grade security' },
-              { icon: '📈', text: 'Unlimited link analytics' },
-            ].map((feature, i) => (
-              <div key={i} className="flex items-center gap-3 text-gray-300">
-                <span className="text-xl">{feature.icon}</span>
-                <span>{feature.text}</span>
-              </div>
-            ))}
-          </div>
+          <h2 className="text-xl font-bold text-white">Create Account</h2>
+          <p className="text-gray-400 text-xs mt-1">Join LinkIQ and start intelligence tracking</p>
         </div>
-      </div>
 
-      {/* Right Panel — Signup Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-surface-950">
-        <div className="w-full max-w-md animate-fade-in">
-          {/* Mobile brand header */}
-          <div className="lg:hidden text-center mb-8">
-            <div className="inline-flex items-center gap-2 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                </svg>
-              </div>
-              <span className="text-2xl font-bold text-white">LinkIQ</span>
+        <form onSubmit={handleSubmit} className="space-y-4" id="signup-form">
+          {/* Name Field */}
+          <div>
+            <label htmlFor="signup-name" className="block text-xs font-semibold text-gray-300 mb-1.5 uppercase tracking-wider">
+              Full Name
+            </label>
+            <div className="relative">
+              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-gray-500" />
+              <input
+                id="signup-name"
+                name="name"
+                type="text"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="John Doe"
+                className={inputClass('name')}
+                autoComplete="name"
+              />
             </div>
+            {errors.name && <p className="mt-1 text-xs text-red-400 font-medium">{errors.name}</p>}
           </div>
 
-          <h3 className="text-2xl font-bold text-white mb-2">Create your account</h3>
-          <p className="text-gray-400 mb-8">Start shortening links and tracking analytics</p>
-
-          <form onSubmit={handleSubmit} className="space-y-4" id="signup-form">
-            {/* Name Field */}
-            <div>
-              <label htmlFor="signup-name" className="block text-sm font-medium text-gray-300 mb-1.5">
-                Full Name
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                <input
-                  id="signup-name"
-                  name="name"
-                  type="text"
-                  value={formData.name}
-                  onChange={handleChange}
-                  placeholder="John Doe"
-                  className={inputClass('name')}
-                  autoComplete="name"
-                />
-              </div>
-              {errors.name && <p className="mt-1.5 text-sm text-red-400">{errors.name}</p>}
+          {/* Email Field */}
+          <div>
+            <label htmlFor="signup-email" className="block text-xs font-semibold text-gray-300 mb-1.5 uppercase tracking-wider">
+              Email Address
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-gray-500" />
+              <input
+                id="signup-email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="you@example.com"
+                className={inputClass('email')}
+                autoComplete="email"
+              />
             </div>
+            {errors.email && <p className="mt-1 text-xs text-red-400 font-medium">{errors.email}</p>}
+          </div>
 
-            {/* Email Field */}
-            <div>
-              <label htmlFor="signup-email" className="block text-sm font-medium text-gray-300 mb-1.5">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                <input
-                  id="signup-email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="you@example.com"
-                  className={inputClass('email')}
-                  autoComplete="email"
-                />
-              </div>
-              {errors.email && <p className="mt-1.5 text-sm text-red-400">{errors.email}</p>}
+          {/* Password Field */}
+          <div>
+            <label htmlFor="signup-password" className="block text-xs font-semibold text-gray-300 mb-1.5 uppercase tracking-wider">
+              Password
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-gray-500" />
+              <input
+                id="signup-password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Min. 6 characters"
+                className={`${inputClass('password')} pr-12`}
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
+            {errors.password && <p className="mt-1 text-xs text-red-400 font-medium">{errors.password}</p>}
+          </div>
 
-            {/* Password Field */}
-            <div>
-              <label htmlFor="signup-password" className="block text-sm font-medium text-gray-300 mb-1.5">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                <input
-                  id="signup-password"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Min. 6 characters"
-                  className={`${inputClass('password')} pr-12`}
-                  autoComplete="new-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-              {errors.password && <p className="mt-1.5 text-sm text-red-400">{errors.password}</p>}
+          {/* Confirm Password Field */}
+          <div>
+            <label htmlFor="signup-confirm" className="block text-xs font-semibold text-gray-300 mb-1.5 uppercase tracking-wider">
+              Confirm Password
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-gray-500" />
+              <input
+                id="signup-confirm"
+                name="confirmPassword"
+                type={showPassword ? 'text' : 'password'}
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                placeholder="Repeat your password"
+                className={inputClass('confirmPassword')}
+                autoComplete="new-password"
+              />
             </div>
+            {errors.confirmPassword && <p className="mt-1 text-xs text-red-400 font-medium">{errors.confirmPassword}</p>}
+          </div>
 
-            {/* Confirm Password Field */}
-            <div>
-              <label htmlFor="signup-confirm" className="block text-sm font-medium text-gray-300 mb-1.5">
-                Confirm Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                <input
-                  id="signup-confirm"
-                  name="confirmPassword"
-                  type={showPassword ? 'text' : 'password'}
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  placeholder="Repeat your password"
-                  className={inputClass('confirmPassword')}
-                  autoComplete="new-password"
-                />
-              </div>
-              {errors.confirmPassword && <p className="mt-1.5 text-sm text-red-400">{errors.confirmPassword}</p>}
-            </div>
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            id="signup-submit"
+            className="w-full py-3 px-4 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-brand-600/10 hover:shadow-brand-600/25 cursor-pointer text-sm mt-4"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4.5 h-4.5 animate-spin" />
+                Creating account...
+              </>
+            ) : (
+              <>
+                Create Account
+                <ArrowRight className="w-4.5 h-4.5" />
+              </>
+            )}
+          </button>
+        </form>
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              id="signup-submit"
-              className="w-full py-3 px-4 bg-gradient-to-r from-brand-600 to-brand-500 text-white font-semibold rounded-xl hover:from-brand-500 hover:to-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-500/50 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2 mt-6"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Creating account...
-                </>
-              ) : (
-                <>
-                  Create Account
-                  <ArrowRight className="w-5 h-5" />
-                </>
-              )}
-            </button>
-          </form>
-
-          <p className="mt-6 text-center text-gray-400">
-            Already have an account?{' '}
-            <Link to="/login" className="text-brand-400 hover:text-brand-300 font-medium transition-colors">
-              Sign in
-            </Link>
-          </p>
-        </div>
+        <p className="mt-6 text-center text-sm text-gray-400">
+          Already have an account?{' '}
+          <Link to="/login" className="text-brand-400 hover:text-brand-300 font-semibold transition-colors">
+            Sign in
+          </Link>
+        </p>
       </div>
     </div>
   );
