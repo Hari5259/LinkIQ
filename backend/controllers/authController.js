@@ -4,6 +4,7 @@ const { validationResult } = require('express-validator');
 const User = require('../models/User');
 const { BCRYPT_SALT_ROUNDS, JWT_EXPIRY } = require('../utils/constants');
 const logger = require('../utils/logger');
+const memoryDb = require('../utils/memoryDb');
 
 /**
  * Generate a JWT token for a user.
@@ -13,7 +14,7 @@ const logger = require('../utils/logger');
 const generateToken = (userId) => {
   return jwt.sign(
     { userId },
-    process.env.JWT_SECRET,
+    process.env.JWT_SECRET || 'linkiq_fallback_secret',
     { expiresIn: process.env.JWT_EXPIRY || JWT_EXPIRY }
   );
 };
@@ -25,7 +26,7 @@ const generateToken = (userId) => {
  */
 const register = async (req, res, next) => {
   try {
-    // Check validation results from express-validator
+    // Check validation results
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -40,24 +41,45 @@ const register = async (req, res, next) => {
 
     const { name, email, password } = req.body;
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(409).json({
-        success: false,
-        message: 'An account with this email already exists',
-      });
-    }
-
     // Hash password with bcrypt
     const hashedPassword = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
 
-    // Create user
-    const user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-    });
+    let user;
+    if (global.useMemoryEmulation) {
+      // Check existing in memoryDb
+      const existingUser = memoryDb.users.find(u => u.email === email.toLowerCase());
+      if (existingUser) {
+        return res.status(409).json({
+          success: false,
+          message: 'An account with this email already exists',
+        });
+      }
+
+      user = {
+        _id: `user_${Date.now()}`,
+        name,
+        email: email.toLowerCase(),
+        password: hashedPassword,
+        createdAt: new Date(),
+      };
+      memoryDb.users.push(user);
+    } else {
+      // Check if user already exists in MongoDB
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(409).json({
+          success: false,
+          message: 'An account with this email already exists',
+        });
+      }
+
+      // Create user
+      user = await User.create({
+        name,
+        email,
+        password: hashedPassword,
+      });
+    }
 
     // Generate token
     const token = generateToken(user._id);
@@ -102,17 +124,28 @@ const login = async (req, res, next) => {
     }
 
     const { email, password } = req.body;
+    let user;
 
-    // Find user and explicitly select password field
-    const user = await User.findOne({ email }).select('+password');
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid email or password',
-      });
+    if (global.useMemoryEmulation) {
+      user = memoryDb.users.find(u => u.email === email.toLowerCase());
+      if (!user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid email or password',
+        });
+      }
+    } else {
+      // Find user and explicitly select password field
+      user = await User.findOne({ email }).select('+password');
+      if (!user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid email or password',
+        });
+      }
     }
 
-    // Compare passwords using bcrypt
+    // Compare passwords
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({
@@ -132,7 +165,7 @@ const login = async (req, res, next) => {
       data: {
         token,
         user: {
-          id: user._id,
+          id: user._id || user.id,
           name: user.name,
           email: user.email,
         },
@@ -150,7 +183,13 @@ const login = async (req, res, next) => {
  */
 const getMe = async (req, res, next) => {
   try {
-    const user = await User.findById(req.userId);
+    let user;
+    if (global.useMemoryEmulation) {
+      user = memoryDb.users.find(u => u._id === req.userId);
+    } else {
+      user = await User.findById(req.userId);
+    }
+
     if (!user) {
       return res.status(404).json({
         success: false,

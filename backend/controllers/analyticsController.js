@@ -1,15 +1,71 @@
 const Url = require('../models/Url');
 const Visit = require('../models/Visit');
+const memoryDb = require('../utils/memoryDb');
 
 // Get detailed analytics for a specific URL
 const getAnalytics = async (req, res, next) => {
   try {
-    const url = await Url.findOne({ _id: req.params.urlId, userId: req.userId });
-    if (!url) return res.status(404).json({ success: false, message: 'URL not found' });
-
     const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
     const now = new Date();
     const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000);
+
+    if (global.useMemoryEmulation) {
+      const url = memoryDb.urls.find(u => u._id === req.params.urlId && u.userId === req.userId);
+      if (!url) return res.status(404).json({ success: false, message: 'URL not found' });
+
+      const urlVisits = memoryDb.visits.filter(v => v.urlId === url._id);
+
+      // Last visit
+      const sortedVisits = [...urlVisits].sort((a, b) => new Date(b.visitedAt) - new Date(a.visitedAt));
+      const lastVisit = sortedVisits[0];
+
+      // Daily Trend
+      const dailyTrendMap = {};
+      urlVisits
+        .filter(v => new Date(v.visitedAt) >= thirtyDaysAgo)
+        .forEach(v => {
+          const dateStr = new Date(v.visitedAt).toISOString().split('T')[0];
+          dailyTrendMap[dateStr] = (dailyTrendMap[dateStr] || 0) + 1;
+        });
+
+      const dailyTrend = Object.keys(dailyTrendMap).sort().map(date => ({
+        _id: date,
+        clicks: dailyTrendMap[date],
+      }));
+
+      // Device breakdown
+      const deviceMap = {};
+      urlVisits.forEach(v => { deviceMap[v.device] = (deviceMap[v.device] || 0) + 1; });
+      const devices = Object.keys(deviceMap).map(k => ({ name: k || 'Unknown', value: deviceMap[k] }));
+
+      // Browser breakdown
+      const browserMap = {};
+      urlVisits.forEach(v => { browserMap[v.browser] = (browserMap[v.browser] || 0) + 1; });
+      const browsers = Object.keys(browserMap).map(k => ({ name: k || 'Unknown', value: browserMap[k] }));
+
+      // Country breakdown
+      const countryMap = {};
+      urlVisits.forEach(v => { countryMap[v.country] = (countryMap[v.country] || 0) + 1; });
+      const countries = Object.keys(countryMap).map(k => ({ name: k || 'Unknown', value: countryMap[k] }))
+        .sort((a, b) => b.value - a.value).slice(0, 10);
+
+      return res.json({
+        success: true,
+        data: {
+          url: { ...url, shortUrl: `${baseUrl}/${url.shortCode}` },
+          totalClicks: url.totalClicks,
+          lastVisited: lastVisit?.visitedAt || null,
+          dailyTrend,
+          devices,
+          browsers,
+          countries,
+          recentVisits: sortedVisits.slice(0, 20),
+        },
+      });
+    }
+
+    const url = await Url.findOne({ _id: req.params.urlId, userId: req.userId });
+    if (!url) return res.status(404).json({ success: false, message: 'URL not found' });
 
     // All aggregations in parallel for performance
     const [dailyTrend, devices, browsers, countries, recentVisits, lastVisit] = await Promise.all([
@@ -63,6 +119,15 @@ const getAnalytics = async (req, res, next) => {
 // Public stats (no auth required)
 const getPublicStats = async (req, res, next) => {
   try {
+    if (global.useMemoryEmulation) {
+      const url = memoryDb.urls.find(u => u.shortCode === req.params.shortCode.toLowerCase());
+      if (!url) return res.status(404).json({ success: false, message: 'URL not found' });
+      return res.json({
+        success: true,
+        data: { shortCode: url.shortCode, totalClicks: url.totalClicks, createdAt: url.createdAt },
+      });
+    }
+
     const url = await Url.findOne({ shortCode: req.params.shortCode });
     if (!url) return res.status(404).json({ success: false, message: 'URL not found' });
 

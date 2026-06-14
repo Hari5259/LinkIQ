@@ -11,7 +11,12 @@ dotenv.config();
 const seed = async () => {
   try {
     console.log('Connecting to database...');
-    await mongoose.connect(process.env.MONGODB_URI);
+    let uri = process.env.MONGODB_URI;
+    if (!uri || uri.includes('username:password') || uri.includes('cluster.mongodb.net')) {
+      uri = 'mongodb://127.0.0.1:27017/linkiq';
+      console.log(`No valid MONGODB_URI specified. Falling back to local: ${uri}`);
+    }
+    await mongoose.connect(uri);
     console.log('Database connected.');
 
     // Clear existing data

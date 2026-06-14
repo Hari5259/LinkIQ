@@ -7,6 +7,7 @@ import SignupPage from './pages/SignupPage';
 import DashboardPage from './pages/DashboardPage';
 import LinksPage from './pages/LinksPage';
 import AnalyticsPage from './pages/AnalyticsPage';
+import LandingPage from './pages/LandingPage';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
       <Router>
         <Routes>
           {/* Public Routes */}
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
 
@@ -35,7 +37,6 @@ function App() {
           } />
 
           {/* Default redirect */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </Router>

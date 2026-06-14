@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
-const { createUrl, getUrls, updateUrl, deleteUrl, getStats } = require('../controllers/urlController');
+const { createUrl, getUrls, updateUrl, deleteUrl, getStats, createPublicUrl } = require('../controllers/urlController');
 const { createUrlValidation, updateUrlValidation } = require('../validators/urlValidator');
 
+router.post('/public', createUrlValidation, createPublicUrl);
 router.post('/', auth, createUrlValidation, createUrl);
 router.get('/', auth, getUrls);
 router.get('/stats', auth, getStats);

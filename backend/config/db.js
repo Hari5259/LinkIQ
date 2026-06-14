@@ -7,9 +7,12 @@ const logger = require('../utils/logger');
  */
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      // Mongoose 7+ no longer needs useNewUrlParser or useUnifiedTopology
-    });
+    let uri = process.env.MONGODB_URI;
+    if (!uri || uri.includes('username:password') || uri.includes('cluster.mongodb.net')) {
+      uri = 'mongodb://127.0.0.1:27017/linkiq';
+      logger.warn(`No valid MONGODB_URI specified. Falling back to local: ${uri}`);
+    }
+    const conn = await mongoose.connect(uri, { serverSelectionTimeoutMS: 2000 });
 
     logger.success(`MongoDB Connected: ${conn.connection.host}`);
 
@@ -29,10 +32,12 @@ const connectDB = async () => {
       process.exit(0);
     });
 
+    global.useMemoryEmulation = false;
     return conn;
   } catch (error) {
-    logger.error('MongoDB connection failed', { error: error.message });
-    process.exit(1);
+    logger.warn('MongoDB connection failed. Starting in local in-memory data emulation mode.', { error: error.message });
+    global.useMemoryEmulation = true;
+    return null;
   }
 };
 

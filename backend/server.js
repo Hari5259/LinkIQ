@@ -48,6 +48,7 @@ app.use('/api/urls', urlRoutes);
 app.use('/api/analytics', analyticsRoutes);
 
 // Redirect endpoint — MUST be last (catches /:shortCode)
+app.get('/r/:shortCode', redirect);
 app.get('/:shortCode', redirect);
 
 // ── 404 Handler ────────────────────────────────
