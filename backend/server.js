@@ -37,8 +37,10 @@ app.get('/api/health', (req, res) => {
 });
 
 // ── Route Registration ─────────────────────────
-// Routes will be added in subsequent commits:
-// app.use('/api/auth', authRoutes);
+const authRoutes = require('./routes/authRoutes');
+app.use('/api/auth', authRoutes);
+
+// Future routes (will be added in subsequent commits):
 // app.use('/api/urls', urlRoutes);
 // app.use('/api/analytics', analyticsRoutes);
 // app.get('/:shortCode', redirectController.redirect);
