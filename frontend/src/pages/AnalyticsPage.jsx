@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Copy, Check, Calendar, Globe, AlertCircle, Loader2, Play } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell, Legend } from 'recharts';
-import analyticsService from '../../services/analyticsService';
-import DashboardLayout from '../../components/layout/DashboardLayout';
-import { formatDate, timeAgo } from '../../utils/formatters';
+import analyticsService from '../services/analyticsService';
+import DashboardLayout from '../components/layout/DashboardLayout';
+import { formatDate, timeAgo } from '../utils/formatters';
 import toast from 'react-hot-toast';
 
 const COLORS = ['#818cf8', '#34d399', '#fb7185', '#fbbf24', '#22d3ee', '#a78bfa'];

@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Link2, BarChart3, TrendingUp, Calendar, ChevronRight, Loader2, ArrowUpRight } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
-import urlService from '../../services/urlService';
-import StatCard from '../../components/ui/StatCard';
-import LinkModal from '../../components/dashboard/LinkModal';
-import DashboardLayout from '../../components/layout/DashboardLayout';
-import { formatNumber, timeAgo } from '../../utils/formatters';
+import urlService from '../services/urlService';
+import StatCard from '../components/ui/StatCard';
+import LinkModal from '../components/dashboard/LinkModal';
+import DashboardLayout from '../components/layout/DashboardLayout';
+import { formatNumber, timeAgo } from '../utils/formatters';
 
 export default function DashboardPage() {
   const navigate = useNavigate();

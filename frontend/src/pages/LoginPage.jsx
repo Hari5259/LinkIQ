@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
-import AnimatedBackground from '../../components/auth/AnimatedBackground';
+import AnimatedBackground from '../components/auth/AnimatedBackground';
 
 /**
  * LoginPage — split-screen layout with animated left panel and form right panel.

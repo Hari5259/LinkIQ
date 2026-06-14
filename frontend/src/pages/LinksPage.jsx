@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, Filter, ArrowUpDown, Copy, Check, BarChart3, Edit, Trash2, Globe, Calendar, Loader2 } from 'lucide-react';
-import urlService from '../../services/urlService';
-import LinkModal from '../../components/dashboard/LinkModal';
-import DashboardLayout from '../../components/layout/DashboardLayout';
-import { formatDate, formatNumber } from '../../utils/formatters';
+import urlService from '../services/urlService';
+import LinkModal from '../components/dashboard/LinkModal';
+import DashboardLayout from '../components/layout/DashboardLayout';
+import { formatDate, formatNumber } from '../utils/formatters';
 import toast from 'react-hot-toast';
 
 export default function LinksPage() {
