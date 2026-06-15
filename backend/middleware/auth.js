@@ -30,7 +30,7 @@ const auth = (req, res, next) => {
     }
 
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'linkiq_fallback_secret');
 
     // Attach userId to request object for route handlers
     req.userId = decoded.userId;

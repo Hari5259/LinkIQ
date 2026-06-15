@@ -1,7 +1,7 @@
 const { validationResult } = require('express-validator');
 const Url = require('../models/Url');
 const Visit = require('../models/Visit');
-const { generateUniqueShortCode, isAliasAvailable } = require('../services/shortCodeService');
+const { generateUniqueShortCode, isAliasAvailable, RESERVED_ALIASES } = require('../services/shortCodeService');
 const memoryDb = require('../utils/memoryDb');
 
 // Create a new short URL
@@ -17,9 +17,13 @@ const createUrl = async (req, res, next) => {
 
     if (global.useMemoryEmulation) {
       if (customAlias) {
-        const taken = memoryDb.urls.some(u => u.shortCode === customAlias.toLowerCase());
+        const lowerAlias = customAlias.toLowerCase();
+        if (RESERVED_ALIASES.includes(lowerAlias)) {
+          return res.status(400).json({ success: false, message: 'This alias is a reserved keyword and cannot be used' });
+        }
+        const taken = memoryDb.urls.some(u => u.shortCode === lowerAlias);
         if (taken) return res.status(409).json({ success: false, message: 'This alias is already taken' });
-        shortCode = customAlias.toLowerCase();
+        shortCode = lowerAlias;
       } else {
         shortCode = Math.random().toString(36).substring(2, 8);
       }
@@ -45,6 +49,10 @@ const createUrl = async (req, res, next) => {
     }
 
     if (customAlias) {
+      const lowerAlias = customAlias.toLowerCase();
+      if (RESERVED_ALIASES.includes(lowerAlias)) {
+        return res.status(400).json({ success: false, message: 'This alias is a reserved keyword and cannot be used' });
+      }
       if (!(await isAliasAvailable(customAlias))) {
         return res.status(409).json({ success: false, message: 'This alias is already taken' });
       }
