@@ -11,7 +11,14 @@ const createUrlValidation = [
     .optional()
     .trim()
     .isLength({ min: 3, max: MAX_ALIAS_LENGTH }).withMessage(`Alias must be 3-${MAX_ALIAS_LENGTH} characters`)
-    .matches(ALIAS_REGEX).withMessage('Alias can only contain letters, numbers, hyphens, and underscores'),
+    .matches(ALIAS_REGEX).withMessage('Alias can only contain letters, numbers, hyphens, and underscores')
+    .custom((value) => {
+      const { RESERVED_ALIASES } = require('../services/shortCodeService');
+      if (RESERVED_ALIASES.includes(value.toLowerCase())) {
+        throw new Error('This alias is a reserved system keyword and cannot be used');
+      }
+      return true;
+    }),
   body('expiryDate')
     .optional()
     .isISO8601().withMessage('Invalid date format')
