@@ -5,7 +5,7 @@ const memoryDb = require('../utils/memoryDb');
 // Get detailed analytics for a specific URL
 const getAnalytics = async (req, res, next) => {
   try {
-    const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
+    const baseUrl = process.env.CLIENT_URL || 'http://localhost:3000';
     const now = new Date();
     const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000);
 
@@ -52,7 +52,7 @@ const getAnalytics = async (req, res, next) => {
       return res.json({
         success: true,
         data: {
-          url: { ...url, shortUrl: `${baseUrl}/${url.shortCode}` },
+          url: { ...url, shortUrl: `${baseUrl}/r/${url.shortCode}` },
           totalClicks: url.totalClicks,
           lastVisited: lastVisit?.visitedAt || null,
           dailyTrend,
@@ -103,7 +103,7 @@ const getAnalytics = async (req, res, next) => {
     res.json({
       success: true,
       data: {
-        url: { ...url.toJSON(), shortUrl: `${baseUrl}/${url.shortCode}` },
+        url: { ...url.toJSON(), shortUrl: `${baseUrl}/r/${url.shortCode}` },
         totalClicks: url.totalClicks,
         lastVisited: lastVisit?.visitedAt || null,
         dailyTrend,
