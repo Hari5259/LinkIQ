@@ -1,18 +1,26 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Link2, BarChart3, TrendingUp, Calendar, ChevronRight, Loader2, ArrowUpRight } from 'lucide-react';
+import { Plus, Link2, BarChart3, TrendingUp, Calendar, ChevronRight, Loader2, ArrowUpRight, Sparkles, Copy, Check, Globe, Tag } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import urlService from '../services/urlService';
 import StatCard from '../components/ui/StatCard';
 import LinkModal from '../components/dashboard/LinkModal';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { formatNumber, timeAgo } from '../utils/formatters';
+import toast from 'react-hot-toast';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Quick Shorten states
+  const [quickUrl, setQuickUrl] = useState('');
+  const [quickAlias, setQuickAlias] = useState('');
+  const [quickLoading, setQuickLoading] = useState(false);
+  const [quickResult, setQuickResult] = useState(null);
+  const [quickCopied, setQuickCopied] = useState(false);
 
   const fetchStats = async () => {
     try {
@@ -28,6 +36,32 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchStats();
   }, []);
+
+  const handleQuickShorten = async (e) => {
+    e.preventDefault();
+    if (!quickUrl.trim()) return;
+    if (!/^https?:\/\//i.test(quickUrl)) {
+      toast.error('URL must start with http:// or https://');
+      return;
+    }
+
+    setQuickLoading(true);
+    try {
+      const response = await urlService.create({
+        originalUrl: quickUrl,
+        customAlias: quickAlias || undefined
+      });
+      toast.success('Link shortened successfully!');
+      setQuickResult(response.data.url);
+      setQuickUrl('');
+      setQuickAlias('');
+      fetchStats();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to shorten link');
+    } finally {
+      setQuickLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -61,6 +95,94 @@ export default function DashboardPage() {
             <Plus className="w-5 h-5" />
             Create Link
           </button>
+        </div>
+
+        {/* Quick Shorten Widget */}
+        <div className="bg-surface-900 border border-surface-700 rounded-2xl p-6 space-y-4">
+          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-brand-400 animate-pulse-slow" /> Quick Shorten
+          </h3>
+          
+          {quickResult ? (
+            <div className="bg-surface-950/60 border border-surface-800 p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-scale-in">
+              <div className="flex-1 min-w-0 text-left space-y-1">
+                <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                  Ready!
+                </span>
+                <p className="text-sm text-gray-400 truncate mt-1">Shortened URL:</p>
+                <p className="text-base font-bold text-brand-400 truncate">{quickResult.shortUrl}</p>
+                <p className="text-xs text-gray-500 truncate">Destination: {quickResult.originalUrl}</p>
+              </div>
+              
+              <div className="flex items-center gap-3 w-full sm:w-auto shrink-0">
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(quickResult.shortUrl);
+                    setQuickCopied(true);
+                    toast.success('Copied shortened link!');
+                    setTimeout(() => setQuickCopied(false), 2000);
+                  }}
+                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2.5 bg-surface-800 hover:bg-surface-750 text-gray-300 hover:text-white rounded-xl border border-surface-700 text-sm font-semibold transition-all cursor-pointer"
+                >
+                  {quickCopied ? (
+                    <>
+                      <Check className="w-4 h-4 text-emerald-400" /> Copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" /> Copy Link
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => setQuickResult(null)}
+                  className="flex-1 sm:flex-initial px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-sm font-semibold transition-all cursor-pointer"
+                >
+                  Shorten Another
+                </button>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleQuickShorten} className="flex flex-col lg:flex-row gap-4">
+              <div className="relative flex-1">
+                <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-gray-500" />
+                <input
+                  type="text"
+                  placeholder="Paste long URL (e.g. https://...)"
+                  value={quickUrl}
+                  onChange={(e) => setQuickUrl(e.target.value)}
+                  className="w-full pl-11 pr-4 py-3 bg-surface-950 border border-surface-700 rounded-xl text-white placeholder-gray-550 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all text-sm font-medium"
+                />
+              </div>
+              
+              <div className="relative lg:w-72">
+                <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-gray-500" />
+                <input
+                  type="text"
+                  placeholder="Custom alias (optional)"
+                  value={quickAlias}
+                  onChange={(e) => setQuickAlias(e.target.value)}
+                  className="w-full pl-11 pr-4 py-3 bg-surface-950 border border-surface-700 rounded-xl text-white placeholder-gray-550 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all text-sm font-medium"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={quickLoading || !quickUrl.trim()}
+                className="py-3 px-6 bg-brand-500 hover:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all shadow-md flex items-center justify-center gap-2 shrink-0 text-sm cursor-pointer"
+              >
+                {quickLoading ? (
+                  <>
+                    <Loader2 className="w-4.5 h-4.5 animate-spin" /> Shortening...
+                  </>
+                ) : (
+                  <>
+                    Shorten
+                  </>
+                )}
+              </button>
+            </form>
+          )}
         </div>
 
         {/* Stats Grid */}

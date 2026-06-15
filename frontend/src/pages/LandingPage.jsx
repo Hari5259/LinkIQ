@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Link2, Menu, ChevronLeft, ChevronRight, Copy, Check, Loader2, Download, ExternalLink, Sparkles, QrCode, TrendingUp, Calendar, Shield, Cpu, Activity, Globe } from 'lucide-react';
+import { Link2, ChevronLeft, ChevronRight, Copy, Check, Loader2, Download, ExternalLink, Sparkles, QrCode, TrendingUp, Calendar, Shield, Activity, Globe, Search, BarChart3 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import urlService from '../services/urlService';
+import analyticsService from '../services/analyticsService';
 import toast from 'react-hot-toast';
 
 export default function LandingPage() {
@@ -11,6 +12,12 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(false);
   const [createdUrl, setCreatedUrl] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [qrFgColor, setQrFgColor] = useState('#818cf8'); // default brand color
+
+  // Public Tracker state
+  const [trackCode, setTrackCode] = useState('');
+  const [trackLoading, setTrackLoading] = useState(false);
+  const [trackResult, setTrackResult] = useState(null);
 
   // Carousel slider state
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -20,7 +27,7 @@ export default function LandingPage() {
       subtitle: "Smarter Links. Deeper Insights.",
       desc: "Shorten URLs instantly, add dynamic expiration rules, and generate print-ready QR codes for marketing campaigns.",
       badge: "ENTERPRISE READY",
-      bgGradient: "from-[#081b33] to-[#040814]",
+      bgGradient: "from-brand-950/80 to-surface-950",
       icon: <Link2 className="w-20 h-20 text-brand-400" />
     },
     {
@@ -28,7 +35,7 @@ export default function LandingPage() {
       subtitle: "Comprehensive Visitor Intelligence Reports",
       desc: "Analyze browser details, device distributions, IP addresses, and geographic locations for every single click.",
       badge: "ANALYTICS SYSTEM",
-      bgGradient: "from-[#1a0f30] to-[#0a0514]",
+      bgGradient: "from-emerald-950/40 to-surface-950",
       icon: <TrendingUp className="w-20 h-20 text-emerald-400" />
     },
     {
@@ -36,7 +43,7 @@ export default function LandingPage() {
       subtitle: "Connect Offline Media to Online Content",
       desc: "Auto-generate high-resolution QR codes that change destination dynamically without reprint requirements.",
       badge: "SMART QR TECHNOLOGY",
-      bgGradient: "from-[#0a2720] to-[#030d0a]",
+      bgGradient: "from-cyan-950/40 to-surface-950",
       icon: <QrCode className="w-20 h-20 text-cyan-400" />
     }
   ];
@@ -44,31 +51,31 @@ export default function LandingPage() {
   const campaignModules = [
     {
       title: "Marketing Campaigns",
-      icon: <TrendingUp className="w-10 h-10 text-[#f84464]" />,
+      icon: <TrendingUp className="w-10 h-10 text-brand-400" />,
       desc: "Short links for Google, Facebook, and newsletter advertising campaigns.",
       metric: "98% CTR Average"
     },
     {
       title: "Social Bio Portals",
-      icon: <Link2 className="w-10 h-10 text-[#f84464]" />,
+      icon: <Link2 className="w-10 h-10 text-emerald-400" />,
       desc: "Combine and manage multiple profile destinations into a single custom slug.",
       metric: "Custom Slugs"
     },
     {
       title: "Affiliate & Attribution",
-      icon: <Activity className="w-10 h-10 text-[#f84464]" />,
+      icon: <Activity className="w-10 h-10 text-cyan-400" />,
       desc: "Track affiliate conversions, referral metrics, and attribution codes.",
       metric: "Secure Redirects"
     },
     {
       title: "Corporate Redirects",
-      icon: <Shield className="w-10 h-10 text-[#f84464]" />,
+      icon: <Shield className="w-10 h-10 text-amber-400" />,
       desc: "Sleek URLs utilizing custom branded domains with SSL support.",
       metric: "Enterprise SLA"
     },
     {
       title: "Print QR Codes",
-      icon: <QrCode className="w-10 h-10 text-[#f84464]" />,
+      icon: <QrCode className="w-10 h-10 text-brand-400" />,
       desc: "Dynamic print-ready QR codes for packaging, banners, and posters.",
       metric: "Vector Export"
     }
@@ -110,12 +117,36 @@ export default function LandingPage() {
     }
   };
 
-  const handleCopy = () => {
-    if (!createdUrl) return;
-    navigator.clipboard.writeText(createdUrl.shortUrl);
+  const handleCopy = (text) => {
+    navigator.clipboard.writeText(text);
     setCopied(true);
     toast.success('Copied to clipboard!');
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleTrack = async (e) => {
+    e.preventDefault();
+    if (!trackCode.trim()) return;
+
+    let code = trackCode.trim();
+    // Extract shortcode from full URLs if pasted
+    if (code.includes('/r/')) {
+      code = code.split('/r/').pop();
+    } else if (code.includes('/')) {
+      code = code.split('/').pop();
+    }
+
+    setTrackLoading(true);
+    setTrackResult(null);
+    try {
+      const res = await analyticsService.getPublicStats(code);
+      setTrackResult(res.data);
+      toast.success('Link performance loaded!');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Verify the short link code and try again.');
+    } finally {
+      setTrackLoading(false);
+    }
   };
 
   const downloadQRCode = () => {
@@ -128,6 +159,9 @@ export default function LandingPage() {
     img.onload = () => {
       canvas.width = img.width;
       canvas.height = img.height;
+      // fill a white background first so transparency doesn't make code unreadable
+      ctx.fillStyle = '#0a0a0f';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0);
       const pngFile = canvas.toDataURL('image/png');
       const downloadLink = document.createElement('a');
@@ -138,38 +172,52 @@ export default function LandingPage() {
     img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
   };
 
+  // QR Color choices
+  const qrColors = [
+    { name: 'Indigo', value: '#818cf8' },
+    { name: 'Emerald', value: '#34d399' },
+    { name: 'Cyan', value: '#22d3ee' },
+    { name: 'Amber', value: '#fbbf24' },
+    { name: 'Rose', value: '#fb7185' }
+  ];
+
   return (
-    <div className="min-h-screen bg-[#f8f9fa] text-[#333333] flex flex-col font-sans selection:bg-[#f84464]/20 selection:text-[#f84464]">
+    <div className="min-h-screen bg-surface-950 text-gray-100 flex flex-col font-sans selection:bg-brand-500/30 selection:text-white relative overflow-hidden">
       
+      {/* Decorative background glows */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-brand-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 left-1/3 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
+
       {/* ── Premium Top Header ── */}
-      <header className="w-full bg-[#1e2029] text-white py-4 px-6 md:px-12 sticky top-0 z-50 shadow-md">
+      <header className="w-full bg-surface-900/90 backdrop-blur-md text-white py-4 px-6 md:px-12 sticky top-0 z-50 shadow-lg border-b border-surface-800">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           
           {/* Logo */}
           <div className="flex items-center gap-2 cursor-pointer select-none" onClick={() => navigate('/')}>
             <span className="text-2xl font-black tracking-tight text-white animate-fade-in">link</span>
-            <div className="bg-[#f84464] text-white font-black px-2.5 py-1 rounded-md text-sm leading-none shadow-md">
+            <div className="bg-brand-500 text-white font-black px-2.5 py-1 rounded-lg text-sm leading-none shadow-lg shadow-brand-500/20">
               IQ
             </div>
           </div>
 
           {/* Right Section: System status, Sign In button, and menu */}
           <div className="flex items-center gap-6">
-            <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-gray-300">
+            <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-gray-400">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>System Online (In-Memory DB Mode)</span>
+              <span>System Online (In-Memory DB)</span>
             </div>
 
             <Link
               to="/login"
-              className="hover:text-[#f84464] text-white font-bold text-sm transition-colors py-1.5"
+              className="hover:text-brand-400 text-gray-300 font-bold text-sm transition-colors py-1.5"
             >
               Sign In
             </Link>
 
             <Link
               to="/signup"
-              className="bg-[#f84464] hover:bg-[#d83652] text-white font-bold text-sm px-4 py-2 rounded-lg transition-all shadow-sm"
+              className="bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm px-4 py-2 rounded-xl transition-all shadow-lg shadow-brand-500/10 hover:shadow-brand-500/20"
             >
               Get Started
             </Link>
@@ -178,7 +226,7 @@ export default function LandingPage() {
       </header>
 
       {/* ── Sub Navigation Bar ── */}
-      <nav className="w-full bg-[#111319] text-gray-300 py-3.5 px-6 md:px-12 text-xs md:text-sm shadow-sm select-none">
+      <nav className="w-full bg-surface-950/80 backdrop-blur-md text-gray-400 py-3.5 px-6 md:px-12 text-xs md:text-sm shadow-sm select-none border-b border-surface-900">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-6 font-medium">
             <Link to="/" className="text-white hover:text-white transition-colors">Instant Shortener</Link>
@@ -187,7 +235,7 @@ export default function LandingPage() {
             <Link to="/login" className="hover:text-white transition-colors">Custom Aliases</Link>
             <Link to="/login" className="hover:text-white transition-colors">Developer API</Link>
           </div>
-          <div className="hidden md:flex items-center gap-6 font-medium text-gray-400">
+          <div className="hidden md:flex items-center gap-6 font-medium text-gray-500">
             <Link to="/login" className="hover:text-white transition-colors">Pricing</Link>
             <Link to="/login" className="hover:text-white transition-colors">Documentation</Link>
             <Link to="/login" className="hover:text-white transition-colors">Enterprise SLA</Link>
@@ -196,8 +244,8 @@ export default function LandingPage() {
       </nav>
 
       {/* ── Featured Banner Slider (Hero Carousel) ── */}
-      <section className="w-full bg-[#1b1c24] py-10 px-4 md:px-12 relative group overflow-hidden">
-        <div className="max-w-7xl mx-auto relative h-56 sm:h-72 rounded-2xl overflow-hidden shadow-2xl">
+      <section className="w-full bg-surface-900/30 py-10 px-4 md:px-12 relative group overflow-hidden border-b border-surface-900">
+        <div className="max-w-7xl mx-auto relative h-56 sm:h-72 rounded-3xl overflow-hidden border border-surface-800 shadow-2xl">
           {slides.map((slide, idx) => {
             const isActive = idx === currentSlide;
             return (
@@ -208,13 +256,13 @@ export default function LandingPage() {
                 }`}
               >
                 <div className="space-y-4 md:max-w-2xl text-center md:text-left text-white">
-                  <span className="inline-block bg-[#f84464] text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full tracking-wider">
+                  <span className="inline-block bg-brand-500/20 border border-brand-500/30 text-brand-400 text-[10px] font-bold px-2.5 py-0.5 rounded-full tracking-wider">
                     {slide.badge}
                   </span>
-                  <h2 className="text-2xl sm:text-4xl font-extrabold leading-tight tracking-tight">
+                  <h2 className="text-2xl sm:text-4xl font-extrabold leading-tight tracking-tight text-white">
                     {slide.title}
                   </h2>
-                  <p className="text-[#f84464] font-semibold text-sm sm:text-base">
+                  <p className="text-brand-400 font-semibold text-sm sm:text-base">
                     {slide.subtitle}
                   </p>
                   <p className="text-gray-400 text-xs sm:text-sm font-normal max-w-lg leading-relaxed">
@@ -232,7 +280,7 @@ export default function LandingPage() {
           {/* Left Arrow */}
           <button
             onClick={handlePrevSlide}
-            className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/45 hover:bg-black/60 text-white transition-all z-25 hover:scale-105 border border-white/5 cursor-pointer"
+            className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-surface-950/65 hover:bg-surface-900 text-white transition-all z-20 hover:scale-105 border border-surface-800 cursor-pointer"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
@@ -240,19 +288,19 @@ export default function LandingPage() {
           {/* Right Arrow */}
           <button
             onClick={handleNextSlide}
-            className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/45 hover:bg-black/60 text-white transition-all z-25 hover:scale-105 border border-white/5 cursor-pointer"
+            className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-surface-950/65 hover:bg-surface-900 text-white transition-all z-20 hover:scale-105 border border-surface-800 cursor-pointer"
           >
             <ChevronRight className="w-5 h-5" />
           </button>
 
           {/* Navigation Dots */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-25">
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
             {slides.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => setCurrentSlide(idx)}
                 className={`w-2.5 h-2.5 rounded-full transition-all ${
-                  idx === currentSlide ? 'bg-[#f84464] w-6' : 'bg-gray-500/50'
+                  idx === currentSlide ? 'bg-brand-500 w-6' : 'bg-gray-700'
                 }`}
               />
             ))}
@@ -260,24 +308,24 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Central Input Shortener Section (Corrected Size Input) ── */}
+      {/* ── Central Input Shortener Section ── */}
       <section className="w-full max-w-4xl mx-auto px-6 -mt-8 relative z-30">
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 md:p-8">
+        <div className="bg-surface-900/60 backdrop-blur-xl border border-surface-700/60 rounded-3xl p-6 md:p-8 shadow-2xl">
           <form onSubmit={handleShorten} className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
-              <Link2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Link2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
               <input
                 type="text"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                placeholder="Paste your long destination URL here (e.g. https://github.com/Hari5259/LinkIQ)..."
-                className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-300 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#f84464]/30 focus:border-[#f84464] transition-all text-base font-semibold"
+                placeholder="Paste your long destination URL here (e.g. https://github.com/)..."
+                className="w-full pl-12 pr-4 py-4 bg-surface-950/80 border border-surface-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all text-base font-semibold"
               />
             </div>
             <button
               type="submit"
               disabled={loading || !url.trim()}
-              className="py-4 px-8 bg-[#f84464] hover:bg-[#d83652] text-white font-bold rounded-xl transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-base shrink-0 cursor-pointer"
+              className="py-4 px-8 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-brand-500/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-base shrink-0 cursor-pointer"
             >
               {loading ? (
                 <>
@@ -293,44 +341,68 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Result Card Container */}
+      {/* Shorten Result Card Container */}
       {createdUrl && (
         <section className="w-full max-w-lg mx-auto px-6 py-8">
-          <div className="bg-white border border-gray-200 shadow-xl rounded-2xl p-6 text-center space-y-5 animate-scale-in relative">
-            <h3 className="text-lg font-bold text-gray-800 flex items-center justify-center gap-1.5">
-              <Sparkles className="w-5 h-5 text-[#f84464]" /> Link Shortened Successfully!
+          <div className="bg-surface-900/80 border border-surface-700 backdrop-blur-md shadow-2xl rounded-3xl p-6 text-center space-y-5 animate-scale-in relative">
+            <h3 className="text-lg font-bold text-white flex items-center justify-center gap-1.5">
+              <Sparkles className="w-5 h-5 text-brand-400" /> Link Shortened Successfully!
             </h3>
 
             <div className="flex flex-col items-center">
-              <div className="p-3.5 bg-gray-50 border border-gray-200 rounded-xl mb-3">
+              {/* Customizable QR Code */}
+              <div className="p-4 bg-surface-950 border border-surface-850 rounded-2xl mb-4">
                 <QRCodeSVG
                   id="public-qr-code"
                   value={createdUrl.shortUrl}
-                  size={130}
-                  bgColor="#ffffff"
-                  fgColor="#1b1c24"
+                  size={140}
+                  bgColor="#0a0a0f"
+                  fgColor={qrFgColor}
                   level="H"
                 />
               </div>
+
+              {/* QR Theme Customizer */}
+              <div className="mb-4">
+                <p className="text-xs text-gray-400 mb-1.5 font-medium">Select QR Code Theme:</p>
+                <div className="flex gap-2.5">
+                  {qrColors.map((color) => (
+                    <button
+                      key={color.name}
+                      onClick={() => setQrFgColor(color.value)}
+                      className="w-5.5 h-5.5 rounded-full border border-surface-700 transition-all hover:scale-110 active:scale-95 cursor-pointer relative"
+                      style={{ backgroundColor: color.value }}
+                      title={color.name}
+                    >
+                      {qrFgColor === color.value && (
+                        <span className="absolute inset-0 flex items-center justify-center text-[10px] text-surface-950 font-bold">
+                          ✓
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <button
                 onClick={downloadQRCode}
-                className="flex items-center gap-1 text-xs text-[#f84464] hover:text-[#d83652] font-bold transition-all mb-3 hover:underline cursor-pointer"
+                className="flex items-center gap-1 text-xs text-brand-400 hover:text-brand-300 font-bold transition-all mb-2 hover:underline cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" /> Download QR Code
               </button>
             </div>
 
             <div className="w-full">
-              <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-250 rounded-xl w-full">
-                <span className="text-[#f84464] font-bold text-sm truncate flex-1 text-left">
+              <div className="flex items-center gap-2 p-3 bg-surface-950 border border-surface-800 rounded-xl w-full">
+                <span className="text-brand-400 font-bold text-sm truncate flex-1 text-left">
                   {createdUrl.shortUrl}
                 </span>
                 <button
-                  onClick={handleCopy}
-                  className="p-1.5 text-gray-400 hover:text-[#f84464] transition-colors cursor-pointer"
+                  onClick={() => handleCopy(createdUrl.shortUrl)}
+                  className="p-1.5 text-gray-400 hover:text-white transition-colors cursor-pointer"
                   title="Copy URL"
                 >
-                  {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                  {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                 </button>
               </div>
             </div>
@@ -341,13 +413,13 @@ export default function LandingPage() {
                   setUrl('');
                   setCreatedUrl(null);
                 }}
-                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-750 font-semibold text-xs rounded-lg transition-all cursor-pointer"
+                className="px-4 py-2 bg-surface-800 hover:bg-surface-750 text-gray-300 font-semibold text-xs rounded-xl transition-all cursor-pointer border border-surface-700"
               >
                 Shorten Another
               </button>
               <Link
                 to="/signup"
-                className="px-4 py-2 bg-[#f84464] hover:bg-[#d83652] text-white font-semibold text-xs rounded-lg transition-all flex items-center gap-1.5"
+                className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-semibold text-xs rounded-xl transition-all flex items-center gap-1.5 shadow-lg shadow-brand-500/10"
               >
                 Save to Account <ExternalLink className="w-3.5 h-3.5" />
               </Link>
@@ -356,19 +428,99 @@ export default function LandingPage() {
         </section>
       )}
 
+      {/* ── Public Click Tracker (Value Add widget) ── */}
+      <section className="w-full max-w-4xl mx-auto px-6 py-8">
+        <div className="bg-gradient-to-br from-surface-900/80 to-surface-950 border border-surface-800/80 rounded-3xl p-6 md:p-8 space-y-6">
+          <div className="text-center sm:text-left space-y-1">
+            <h3 className="text-xl font-bold text-white flex items-center justify-center sm:justify-start gap-2">
+              <BarChart3 className="w-5 h-5 text-emerald-400" /> Track Link clicks
+            </h3>
+            <p className="text-xs text-gray-400">
+              Query total clicks and basic properties for any public shortened link instantly.
+            </p>
+          </div>
+
+          <form onSubmit={handleTrack} className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-gray-500" />
+              <input
+                type="text"
+                placeholder="Enter short code or copy-pasted linkiq link (e.g. linkiq-repo)..."
+                value={trackCode}
+                onChange={(e) => setTrackCode(e.target.value)}
+                className="w-full pl-11 pr-4 py-3 bg-surface-950/70 border border-surface-700 rounded-xl text-white placeholder-gray-550 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-sm font-medium"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={trackLoading || !trackCode.trim()}
+              className="py-3 px-6 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed text-surface-950 font-bold rounded-xl transition-all shadow-md shrink-0 flex items-center justify-center gap-1.5 text-sm cursor-pointer"
+            >
+              {trackLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-surface-950" /> Loading...
+                </>
+              ) : (
+                <>
+                  Check Stats
+                </>
+              )}
+            </button>
+          </form>
+
+          {trackResult && (
+            <div className="p-5 bg-surface-950 border border-surface-850 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6 animate-scale-in">
+              <div className="space-y-1.5 text-center md:text-left">
+                <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  PUBLIC DATA FOUND
+                </span>
+                <h4 className="text-base font-bold text-white flex items-center gap-1.5 justify-center md:justify-start">
+                  Short link Code: <span className="text-brand-400">linkiq/r/{trackResult.shortCode}</span>
+                </h4>
+                <p className="text-xs text-gray-500 flex items-center gap-1 justify-center md:justify-start">
+                  <Calendar className="w-3.5 h-3.5" /> Created on {new Date(trackResult.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' })}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-6">
+                <div className="text-center md:text-right">
+                  <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">Total Clicks</p>
+                  <p className="text-3xl font-extrabold text-emerald-400">{trackResult.totalClicks}</p>
+                </div>
+                <div className="h-10 w-px bg-surface-800" />
+                <div className="space-y-2">
+                  <button
+                    onClick={() => handleCopy(`${import.meta.env.VITE_API_URL || window.location.origin}/r/${trackResult.shortCode}`)}
+                    className="flex items-center gap-1 text-xs text-gray-300 hover:text-white bg-surface-800 hover:bg-surface-750 px-3 py-1.5 rounded-lg border border-surface-700 transition-all cursor-pointer font-semibold"
+                  >
+                    Copy Short URL
+                  </button>
+                  <Link
+                    to="/signup"
+                    className="block text-[10px] text-brand-400 hover:text-brand-300 text-center font-bold underline"
+                  >
+                    View detailed analytics →
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* ── Campaign Use Cases / Modules Section ── */}
       <section className="max-w-7xl mx-auto w-full px-6 py-12 md:px-12 space-y-8 flex-1">
         
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h2 className="text-xl md:text-2xl font-black text-gray-800 tracking-tight">
+            <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">
               Enterprise Link Solutions
             </h2>
-            <p className="text-xs md:text-sm text-gray-500 mt-1">
+            <p className="text-xs md:text-sm text-gray-400 mt-1">
               Select a module type to explore campaign tracking and analytics.
             </p>
           </div>
-          <Link to="/signup" className="text-xs font-bold text-[#f84464] hover:underline flex items-center gap-1">
+          <Link to="/signup" className="text-xs font-bold text-brand-400 hover:underline flex items-center gap-1 self-start sm:self-auto">
             See All Enterprise Modules <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
@@ -378,11 +530,11 @@ export default function LandingPage() {
           {campaignModules.map((item, idx) => (
             <div
               key={idx}
-              className="flex flex-col bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all hover:-translate-y-1 group cursor-pointer"
+              className="flex flex-col bg-surface-900/40 border border-surface-800/80 rounded-2xl overflow-hidden hover:border-brand-500/30 hover:shadow-brand-500/5 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1.5 group cursor-pointer"
               onClick={() => navigate('/login')}
             >
               {/* Icon Container */}
-              <div className="h-40 bg-gray-50 flex items-center justify-center border-b border-gray-100">
+              <div className="h-36 bg-surface-950 flex items-center justify-center border-b border-surface-900">
                 <div className="group-hover:scale-110 transition-transform duration-300">
                   {item.icon}
                 </div>
@@ -391,16 +543,16 @@ export default function LandingPage() {
               {/* Card info */}
               <div className="p-4 space-y-2 flex-1 flex flex-col justify-between">
                 <div>
-                  <h3 className="font-bold text-sm text-gray-800 line-clamp-1 group-hover:text-[#f84464] transition-colors">
+                  <h3 className="font-bold text-sm text-white line-clamp-1 group-hover:text-brand-400 transition-colors">
                     {item.title}
                   </h3>
-                  <p className="text-gray-400 text-xs leading-relaxed mt-1">
+                  <p className="text-gray-400 text-xs leading-relaxed mt-1.5">
                     {item.desc}
                   </p>
                 </div>
                 
-                <div className="pt-3 border-t border-gray-100 flex justify-between items-center text-xs text-gray-500 font-semibold select-none">
-                  <span className="uppercase text-[9px] text-[#f84464] bg-[#f84464]/5 px-2 py-0.5 rounded">
+                <div className="pt-3 border-t border-surface-850 flex justify-between items-center text-xs text-gray-500 font-semibold select-none">
+                  <span className="uppercase text-[9px] text-brand-450 bg-brand-500/10 px-2 py-0.5 rounded border border-brand-500/20">
                     {item.metric}
                   </span>
                 </div>
@@ -411,7 +563,7 @@ export default function LandingPage() {
       </section>
 
       {/* Corporate Conversion Banner */}
-      <section className="w-full bg-[#2c303b] text-white py-12 px-6">
+      <section className="w-full bg-surface-900 border-t border-b border-surface-800 text-white py-12 px-6">
         <div className="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-6">
           <div className="space-y-2 text-center sm:text-left">
             <h3 className="text-lg sm:text-xl font-bold">Need a Branded Custom Domain?</h3>
@@ -421,7 +573,7 @@ export default function LandingPage() {
           </div>
           <Link
             to="/signup"
-            className="px-6 py-2.5 bg-[#f84464] hover:bg-[#d83652] text-white text-xs font-bold rounded-md transition-all shadow-md whitespace-nowrap"
+            className="px-6 py-2.5 bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-brand-500/10"
           >
             Create Free Account
           </Link>
@@ -429,13 +581,13 @@ export default function LandingPage() {
       </section>
 
       {/* ── Footer ── */}
-      <footer className="w-full bg-[#1e2029] text-gray-400 py-10 px-6 md:px-12 border-t border-gray-800 text-xs">
+      <footer className="w-full bg-surface-950 text-gray-400 py-10 px-6 md:px-12 border-t border-surface-900 text-xs relative z-10">
         <div className="max-w-7xl mx-auto space-y-6">
           
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-surface-900 pb-6">
             <div className="flex items-center gap-2 cursor-default select-none">
               <span className="text-lg font-black text-white">link</span>
-              <div className="bg-[#f84464] text-white font-bold px-1.5 py-0.5 rounded text-xs">
+              <div className="bg-brand-500 text-white font-bold px-1.5 py-0.5 rounded-md text-xs">
                 IQ
               </div>
             </div>
@@ -444,7 +596,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-x-6 gap-y-2 text-gray-500">
+          <div className="flex flex-wrap gap-x-6 gap-y-2 text-gray-500 justify-center sm:justify-start">
             <Link to="/login" className="hover:text-white transition-colors">Privacy Policy</Link>
             <Link to="/login" className="hover:text-white transition-colors">Terms of Service</Link>
             <Link to="/login" className="hover:text-white transition-colors">Developer SLA</Link>

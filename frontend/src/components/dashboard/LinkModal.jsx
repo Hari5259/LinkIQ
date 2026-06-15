@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Copy, Check, Calendar, Tag, Globe, Loader2 } from 'lucide-react';
+import { X, Copy, Check, Calendar, Tag, Globe, Loader2, Download } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import urlService from '../../services/urlService';
 import toast from 'react-hot-toast';
@@ -14,6 +14,29 @@ export default function LinkModal({ isOpen, onClose, urlToEdit, onSave }) {
   const [errors, setErrors] = useState({});
   const [createdUrl, setCreatedUrl] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [qrFgColor, setQrFgColor] = useState('#818cf8');
+
+  const downloadQRCode = () => {
+    const svg = document.getElementById('modal-qr-code');
+    if (!svg) return;
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.fillStyle = '#12121f';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+      const pngFile = canvas.toDataURL('image/png');
+      const downloadLink = document.createElement('a');
+      downloadLink.download = `${createdUrl.shortCode}-qr.png`;
+      downloadLink.href = pngFile;
+      downloadLink.click();
+    };
+    img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -96,8 +119,47 @@ export default function LinkModal({ isOpen, onClose, urlToEdit, onSave }) {
 
         {createdUrl ? (
           <div className="p-6 text-center space-y-6">
-            <div className="inline-flex p-4 bg-brand-500/10 border border-brand-500/20 rounded-2xl">
-              <QRCodeSVG value={createdUrl.shortUrl} size={140} bgColor="#12121f" fgColor="#818cf8" level="H" />
+            <div className="flex flex-col items-center">
+              <div className="inline-flex p-4 bg-brand-500/10 border border-brand-500/20 rounded-2xl mb-4">
+                <QRCodeSVG id="modal-qr-code" value={createdUrl.shortUrl} size={140} bgColor="#12121f" fgColor={qrFgColor} level="H" />
+              </div>
+
+              {/* QR Theme Customizer */}
+              <div className="mb-2">
+                <p className="text-xs text-gray-400 mb-1.5 font-medium">Select QR Code Theme:</p>
+                <div className="flex gap-2.5">
+                  {[
+                    { name: 'Indigo', value: '#818cf8' },
+                    { name: 'Emerald', value: '#34d399' },
+                    { name: 'Cyan', value: '#22d3ee' },
+                    { name: 'Amber', value: '#fbbf24' },
+                    { name: 'Rose', value: '#fb7185' }
+                  ].map((color) => (
+                    <button
+                      type="button"
+                      key={color.name}
+                      onClick={() => setQrFgColor(color.value)}
+                      className="w-5.5 h-5.5 rounded-full border border-surface-700 transition-all hover:scale-110 active:scale-95 cursor-pointer relative"
+                      style={{ backgroundColor: color.value }}
+                      title={color.name}
+                    >
+                      {qrFgColor === color.value && (
+                        <span className="absolute inset-0 flex items-center justify-center text-[10px] text-surface-950 font-bold">
+                          ✓
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={downloadQRCode}
+                className="flex items-center gap-1 text-xs text-brand-400 hover:text-brand-300 font-bold transition-all mt-2 hover:underline cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" /> Download QR Code
+              </button>
             </div>
 
             <div>
